@@ -1,0 +1,129 @@
+local player = game.Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local Debris = game:GetService("Debris")
+
+-- ================= UI =================
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 230, 0, 170)
+main.Position = UDim2.new(0, 15, 0.4, 0)
+main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = false
+
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
+
+-- ================= DASH =================
+local dashBtn = Instance.new("TextButton", main)
+dashBtn.Size = UDim2.new(0.9,0,0,35)
+dashBtn.Position = UDim2.new(0.05,0,0.25,0)
+dashBtn.Text = "Dash"
+dashBtn.BackgroundColor3 = Color3.fromRGB(90,0,120)
+dashBtn.TextColor3 = Color3.new(1,1,1)
+dashBtn.BorderSizePixel = 0
+Instance.new("UICorner", dashBtn)
+
+dashBtn.MouseButton1Click:Connect(function()
+
+	local char = player.Character
+	if char and char:FindFirstChild("HumanoidRootPart") then
+		local hrp = char.HumanoidRootPart
+		
+		local bv = Instance.new("BodyVelocity")
+		bv.MaxForce = Vector3.new(100000,0,100000)
+		bv.Velocity = hrp.CFrame.LookVector * 2 -- DASH SANGAT PENDEK
+		bv.Parent = hrp
+		
+		Debris:AddItem(bv, 0.08)
+	end
+	
+end)
+
+-- ================= PLATFORM =================
+local platformOn = false
+
+local platformBtn = Instance.new("TextButton", main)
+platformBtn.Size = UDim2.new(0.9,0,0,30)
+platformBtn.Position = UDim2.new(0.05,0,0.5,0)
+platformBtn.Text = "Platform"
+platformBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+platformBtn.TextColor3 = Color3.new(1,1,1)
+platformBtn.BorderSizePixel = 0
+Instance.new("UICorner", platformBtn)
+
+platformBtn.MouseButton1Click:Connect(function()
+	platformOn = not platformOn
+	platformBtn.BackgroundColor3 = platformOn and Color3.fromRGB(255,0,150) or Color3.fromRGB(50,50,50)
+end)
+
+UIS.JumpRequest:Connect(function()
+
+	if not platformOn then return end
+	
+	local char = player.Character
+	if char and char:FindFirstChild("HumanoidRootPart") then
+		
+		local root = char.HumanoidRootPart
+		
+		local part = Instance.new("Part")
+		part.Size = Vector3.new(6,1,6)
+		part.Position = root.Position - Vector3.new(0,3,0)
+		part.Anchored = true
+		part.Material = Enum.Material.SmoothPlastic
+		part.Color = Color3.fromRGB(30,30,30)
+		part.Parent = workspace
+		
+		-- Border pink
+		local stroke = Instance.new("SelectionBox")
+		stroke.Adornee = part
+		stroke.Color3 = Color3.fromRGB(255,0,150)
+		stroke.LineThickness = 0.08
+		stroke.Parent = part
+		
+		-- Turun smooth
+		local tween = TweenService:Create(
+			part,
+			TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+			{Position = part.Position - Vector3.new(0,8,0)}
+		)
+		
+		tween:Play()
+		
+		Debris:AddItem(part,1.3)
+	end
+	
+end)
+
+-- ================= ANTI GRAVITY =================
+local antiGravity = false
+
+local antiBtn = Instance.new("TextButton", main)
+antiBtn.Size = UDim2.new(0.9,0,0,30)
+antiBtn.Position = UDim2.new(0.05,0,0.72,0)
+antiBtn.Text = "Anti Gravity"
+antiBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+antiBtn.TextColor3 = Color3.new(1,1,1)
+antiBtn.BorderSizePixel = 0
+Instance.new("UICorner", antiBtn)
+
+antiBtn.MouseButton1Click:Connect(function()
+	antiGravity = not antiGravity
+	antiBtn.BackgroundColor3 = antiGravity and Color3.fromRGB(255,0,150) or Color3.fromRGB(50,50,50)
+	
+	if antiGravity then
+		workspace.Gravity = 50
+	else
+		workspace.Gravity = 196.2
+	end
+end)
+
+-- ================= NO ANIMATION =================
+player.CharacterAdded:Connect(function(char)
+	local hum = char:WaitForChild("Humanoid")
+	if hum:FindFirstChild("Animator") then
+		hum.Animator:Destroy()
+	end
+end)
