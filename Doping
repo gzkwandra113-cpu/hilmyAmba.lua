@@ -1,0 +1,90 @@
+local player = game.Players.LocalPlayer
+local Debris = game:GetService("Debris")
+
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+
+player.CharacterAdded:Connect(function(c)
+	char = c
+	humanoid = c:WaitForChild("Humanoid")
+end)
+
+-- ================= UI =================
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,220,0,180)
+frame.Position = UDim2.new(0.02,0,0.4,0)
+frame.BackgroundColor3 = Color3.fromRGB(10,10,15)
+frame.BorderSizePixel = 0
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,12)
+
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = Color3.fromRGB(0,170,255)
+stroke.Thickness = 3
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,30)
+title.BackgroundTransparency = 1
+title.Text = "PVP ABILITY"
+title.TextColor3 = Color3.fromRGB(0,200,255)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+
+local function createButton(text, posY)
+	local btn = Instance.new("TextButton", frame)
+	btn.Size = UDim2.new(0.9,0,0,40)
+	btn.Position = UDim2.new(0.05,0,0,posY)
+	btn.Text = text
+	btn.BackgroundColor3 = Color3.fromRGB(20,25,40)
+	btn.TextColor3 = Color3.fromRGB(0,200,255)
+	btn.BorderSizePixel = 0
+	
+	Instance.new("UICorner", btn)
+	
+	local btnStroke = Instance.new("UIStroke", btn)
+	btnStroke.Color = Color3.fromRGB(0,170,255)
+	btnStroke.Thickness = 2
+	
+	return btn
+end
+
+-- ================= 1 SPEED BOOST =================
+local speedBtn = createButton("Speed Boost", 40)
+
+speedBtn.MouseButton1Click:Connect(function()
+	local originalSpeed = humanoid.WalkSpeed
+	humanoid.WalkSpeed = originalSpeed + 6
+	
+	task.wait(2)
+	
+	humanoid.WalkSpeed = originalSpeed
+end)
+
+-- ================= 2 JUMP BOOST =================
+local jumpBtn = createButton("Jump Boost", 85)
+
+jumpBtn.MouseButton1Click:Connect(function()
+	local originalJump = humanoid.JumpPower
+	humanoid.JumpPower = originalJump + 15
+	
+	task.wait(2)
+	
+	humanoid.JumpPower = originalJump
+end)
+
+-- ================= 3 QUICK DODGE =================
+local dodgeBtn = createButton("Quick Dodge", 130)
+
+dodgeBtn.MouseButton1Click:Connect(function()
+	if char and char:FindFirstChild("HumanoidRootPart") then
+		local hrp = char.HumanoidRootPart
+		
+		local bv = Instance.new("BodyVelocity")
+		bv.MaxForce = Vector3.new(100000,0,100000)
+		bv.Velocity = hrp.CFrame.RightVector * 20
+		
+		bv.Parent = hrp
+		Debris:AddItem(bv,0.15)
+	end
+end)
