@@ -1,0 +1,158 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local RunService = game:GetService("RunService")
+
+-- Remove old GUI
+if player.PlayerGui:FindFirstChild("HilmyFlyGui") then
+	player.PlayerGui.HilmyFlyGui:Destroy()
+end
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui", player.PlayerGui)
+ScreenGui.Name = "HilmyFlyGui"
+ScreenGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 260, 0, 160)
+MainFrame.Position = UDim2.new(0.02, 0, 0.7, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.BorderSizePixel = 0
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0,10)
+
+-- ===== LOGO =====
+local Logo = Instance.new("ImageLabel", MainFrame)
+Logo.Size = UDim2.new(0, 40, 0, 40)
+Logo.Position = UDim2.new(0, 10, 0, 5)
+Logo.BackgroundTransparency = 1
+Logo.Image = "rbxassetid://a9e70822-9aa1-4bbb-b7ac-4de79f22e86a"
+Logo.ScaleType = Enum.ScaleType.Fit
+Instance.new("UICorner", Logo).CornerRadius = UDim.new(1,0)
+
+-- ===== TITLE =====
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, -60, 0, 30)
+Title.Position = UDim2.new(0, 55, 0, 10)
+Title.BackgroundTransparency = 1
+Title.Text = "Hilmy's Fly"
+Title.TextColor3 = Color3.fromRGB(255,105,180)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+
+-- ===== FLY BUTTON =====
+local FlyButton = Instance.new("TextButton", MainFrame)
+FlyButton.Size = UDim2.new(0.9,0,0,30)
+FlyButton.Position = UDim2.new(0.05,0,0.30,0)
+FlyButton.Text = "FLY : OFF"
+FlyButton.BackgroundColor3 = Color3.fromRGB(255,105,180)
+FlyButton.TextColor3 = Color3.new(1,1,1)
+FlyButton.TextScaled = true
+FlyButton.Font = Enum.Font.GothamBold
+Instance.new("UICorner", FlyButton).CornerRadius = UDim.new(0,8)
+
+-- ===== NOCLIP BUTTON =====
+local NoclipButton = Instance.new("TextButton", MainFrame)
+NoclipButton.Size = UDim2.new(0.9,0,0,30)
+NoclipButton.Position = UDim2.new(0.05,0,0.52,0)
+NoclipButton.Text = "NOCLIP : OFF"
+NoclipButton.BackgroundColor3 = Color3.fromRGB(120,120,120)
+NoclipButton.TextColor3 = Color3.new(1,1,1)
+NoclipButton.TextScaled = true
+NoclipButton.Font = Enum.Font.GothamBold
+Instance.new("UICorner", NoclipButton).CornerRadius = UDim.new(0,8)
+
+-- ===== SPEED LABEL =====
+local SpeedLabel = Instance.new("TextLabel", MainFrame)
+SpeedLabel.Size = UDim2.new(1,0,0,20)
+SpeedLabel.Position = UDim2.new(0,0,0.70,0)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "Speed : 50"
+SpeedLabel.TextColor3 = Color3.new(1,1,1)
+SpeedLabel.TextScaled = true
+SpeedLabel.Font = Enum.Font.Gotham
+
+-- ===== SLIDER =====
+local Slider = Instance.new("Frame", MainFrame)
+Slider.Size = UDim2.new(0.9,0,0,10)
+Slider.Position = UDim2.new(0.05,0,0.85,0)
+Slider.BackgroundColor3 = Color3.fromRGB(60,60,60)
+Instance.new("UICorner", Slider).CornerRadius = UDim.new(0,5)
+
+local SliderButton = Instance.new("Frame", Slider)
+SliderButton.Size = UDim2.new(0,20,1,0)
+SliderButton.BackgroundColor3 = Color3.fromRGB(255,105,180)
+Instance.new("UICorner", SliderButton).CornerRadius = UDim.new(0,5)
+
+-- ===== SYSTEM =====
+local flying = false
+local noclip = false
+local flySpeed = 50
+local bodyVelocity
+local bodyGyro
+local dragging = false
+
+FlyButton.MouseButton1Click:Connect(function()
+	flying = not flying
+	
+	if flying then
+		FlyButton.Text = "FLY : ON"
+		bodyVelocity = Instance.new("BodyVelocity", humanoidRootPart)
+		bodyVelocity.MaxForce = Vector3.new(400000,400000,400000)
+		
+		bodyGyro = Instance.new("BodyGyro", humanoidRootPart)
+		bodyGyro.MaxTorque = Vector3.new(400000,400000,400000)
+	else
+		FlyButton.Text = "FLY : OFF"
+		if bodyVelocity then bodyVelocity:Destroy() end
+		if bodyGyro then bodyGyro:Destroy() end
+	end
+end)
+
+NoclipButton.MouseButton1Click:Connect(function()
+	noclip = not noclip
+	
+	if noclip then
+		NoclipButton.Text = "NOCLIP : ON"
+		NoclipButton.BackgroundColor3 = Color3.fromRGB(255,105,180)
+	else
+		NoclipButton.Text = "NOCLIP : OFF"
+		NoclipButton.BackgroundColor3 = Color3.fromRGB(120,120,120)
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if flying and bodyVelocity and bodyGyro then
+		bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * flySpeed
+		bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+	end
+	
+	if noclip and character then
+		for _, v in pairs(character:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.CanCollide = false
+			end
+		end
+	end
+	
+	if dragging then
+		local mouse = player:GetMouse()
+		local pos = math.clamp((mouse.X - Slider.AbsolutePosition.X) / Slider.AbsoluteSize.X, 0, 1)
+		SliderButton.Position = UDim2.new(pos, -10, 0, 0)
+		flySpeed = math.floor(20 + (pos * 180))
+		SpeedLabel.Text = "Speed : "..flySpeed
+	end
+end)
+
+Slider.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+	end
+end)
+
+Slider.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
