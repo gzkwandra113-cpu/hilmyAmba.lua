@@ -1,0 +1,181 @@
+local player = game.Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+
+local function setupCharacter(character)
+	local humanoid = character:WaitForChild("Humanoid")
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	-- =====================
+	-- 🔥 ANTI DIE
+	-- =====================
+	humanoid.HealthChanged:Connect(function()
+		if humanoid.Health < humanoid.MaxHealth then
+			humanoid.Health = humanoid.MaxHealth
+		end
+	end)
+	humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+
+	-- =====================
+	-- 🔵 PLATFORM
+	-- =====================
+	local platform = Instance.new("Part")
+	platform.Size = Vector3.new(10,1,10)
+	platform.Position = hrp.Position - Vector3.new(0,5,0)
+	platform.Anchored = true
+	platform.CanCollide = true
+	platform.Material = Enum.Material.Neon
+	platform.Color = Color3.fromRGB(0,170,255)
+	platform.Parent = workspace
+
+	local speed = 2
+
+	-- =====================
+	-- 📱 UI
+	-- =====================
+	local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+	gui.Name = "BluePlatformUI"
+	gui.ResetOnSpawn = false
+
+	-- Open Button
+	local openButton = Instance.new("TextButton")
+	openButton.Size = UDim2.new(0,60,0,60)
+	openButton.Position = UDim2.new(0.02,0,0.5,0)
+	openButton.Text = "≡"
+	openButton.TextScaled = true
+	openButton.BackgroundColor3 = Color3.fromRGB(0,0,0)
+	openButton.TextColor3 = Color3.fromRGB(0,170,255)
+	openButton.BorderSizePixel = 0
+	openButton.Parent = gui
+
+	-- Main Frame
+	local mainFrame = Instance.new("Frame")
+	mainFrame.Size = UDim2.new(0,250,0,350)
+	mainFrame.Position = UDim2.new(0.05,0,0.3,0)
+	mainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
+	mainFrame.Visible = false
+	mainFrame.Parent = gui
+	mainFrame.BorderColor3 = Color3.fromRGB(0,170,255)
+	mainFrame.BorderSizePixel = 2
+	mainFrame.BackgroundTransparency = 0.1
+	mainFrame.ClipsDescendants = true
+
+	-- 🔷 LOGO (GANTI SENDIRI ID)
+	local logo = Instance.new("ImageLabel")
+	logo.Size = UDim2.new(0,100,0,100)
+	logo.Position = UDim2.new(0.5,-50,0,10)
+	logo.BackgroundTransparency = 1
+	logo.Image = "rbxassetid://Globe"
+	logo.Parent = mainFrame
+
+	-- Close Button
+	local closeButton = Instance.new("TextButton")
+	closeButton.Size = UDim2.new(0,30,0,30)
+	closeButton.Position = UDim2.new(1,-35,0,5)
+	closeButton.Text = "X"
+	closeButton.TextScaled = true
+	closeButton.BackgroundColor3 = Color3.fromRGB(0,0,0)
+	closeButton.TextColor3 = Color3.fromRGB(0,170,255)
+	closeButton.BorderSizePixel = 0
+	closeButton.Parent = mainFrame
+
+	-- =====================
+	-- DRAG FUNCTION
+	-- =====================
+	local dragging = false
+	local dragInput, dragStart, startPos
+
+	local function update(input)
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+
+	mainFrame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = mainFrame.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	mainFrame.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			update(input)
+		end
+	end)
+
+	-- =====================
+	-- CREATE BUTTON FUNCTION
+	-- =====================
+	local function createButton(text, pos)
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0,60,0,60)
+		btn.Position = pos
+		btn.Text = text
+		btn.TextScaled = true
+		btn.BackgroundColor3 = Color3.fromRGB(20,20,30)
+		btn.TextColor3 = Color3.fromRGB(0,170,255)
+		btn.Parent = mainFrame
+		btn.BorderSizePixel = 0
+		btn.AutoButtonColor = true
+		return btn
+	end
+
+	local up = createButton("↑", UDim2.new(0.5,-30,0.5,-60))
+	local down = createButton("↓", UDim2.new(0.5,-30,0.5,60))
+	local left = createButton("←", UDim2.new(0.3,-30,0.5,0))
+	local right = createButton("→", UDim2.new(0.7,-30,0.5,0))
+	local rise = createButton("▲", UDim2.new(0.1,0,0.75,0))
+	local fall = createButton("▼", UDim2.new(0.75,0,0.75,0))
+
+	up.MouseButton1Click:Connect(function() platform.Position += Vector3.new(0,0,-speed) end)
+	down.MouseButton1Click:Connect(function() platform.Position += Vector3.new(0,0,speed) end)
+	left.MouseButton1Click:Connect(function() platform.Position += Vector3.new(-speed,0,0) end)
+	right.MouseButton1Click:Connect(function() platform.Position += Vector3.new(speed,0,0) end)
+	rise.MouseButton1Click:Connect(function() platform.Position += Vector3.new(0,speed,0) end)
+	fall.MouseButton1Click:Connect(function() platform.Position += Vector3.new(0,-speed,0) end)
+
+	-- =====================
+	-- SMOOTH OPEN / CLOSE
+	-- =====================
+	local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+	openButton.MouseButton1Click:Connect(function()
+		mainFrame.Visible = true
+		local tween = TweenService:Create(mainFrame, tweenInfo, {Position = UDim2.new(0.05,0,0.3,0), BackgroundTransparency = 0.1})
+		tween:Play()
+	end)
+
+	closeButton.MouseButton1Click:Connect(function()
+		local tween = TweenService:Create(mainFrame, tweenInfo, {Position = UDim2.new(0.05,0,-0.5,0), BackgroundTransparency = 1})
+		tween:Play()
+		tween.Completed:Connect(function()
+			mainFrame.Visible = false
+			mainFrame.Position = UDim2.new(0.05,0,0.3,0)
+			mainFrame.BackgroundTransparency = 0.1
+		end)
+	end)
+end
+
+-- =====================
+-- RUN
+-- =====================
+if player.Character then setupCharacter(player.Character) end
+player.CharacterAdded:Connect(setupCharacter)
