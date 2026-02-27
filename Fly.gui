@@ -1,0 +1,176 @@
+-- MOBILE FLY RIGHT SIDE + DRAGGABLE
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+
+local flying = false
+local speed = 65
+local up = false
+local down = false
+
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Parent = player.PlayerGui
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame",gui)
+frame.Size = UDim2.new(0,110,0,140)
+frame.Position = UDim2.new(1,-120,0.55,0)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+frame.BackgroundTransparency = 0.2
+
+-- DRAG MOBILE
+local dragging = false
+local dragStart
+local startPos
+
+frame.InputBegan:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+	end
+
+end)
+
+UIS.InputEnded:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+
+end)
+
+UIS.InputChanged:Connect(function(input)
+
+	if dragging and input.UserInputType == Enum.UserInputType.Touch then
+
+		local delta = input.Position - dragStart
+
+		frame.Position =
+			UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y)
+
+	end
+
+end)
+
+-- tombol function
+local function makeBtn(text,x,y)
+
+	local btn = Instance.new("TextButton",frame)
+	btn.Size = UDim2.new(0,50,0,35)
+	btn.Position = UDim2.new(0,x,0,y)
+	btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	btn.TextColor3 = Color3.fromRGB(0,170,255)
+	btn.TextScaled = true
+	btn.Text = text
+
+	return btn
+
+end
+
+-- Fly Button
+local flyBtn = Instance.new("TextButton",frame)
+flyBtn.Size = UDim2.new(1,0,0,35)
+flyBtn.TextScaled = true
+flyBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+flyBtn.TextColor3 = Color3.fromRGB(0,170,255)
+flyBtn.Text = "FLY OFF"
+
+local upBtn = makeBtn("↑",0,40)
+local downBtn = makeBtn("↓",55,40)
+
+local minus = makeBtn("-",0,80)
+local plus = makeBtn("+",55,80)
+
+-- Fly Force
+local BV = Instance.new("BodyVelocity")
+BV.MaxForce = Vector3.new(9e9,9e9,9e9)
+
+local BG = Instance.new("BodyGyro")
+BG.MaxTorque = Vector3.new(9e9,9e9,9e9)
+BG.P = 10000
+
+-- Toggle Fly
+flyBtn.MouseButton1Click:Connect(function()
+
+	flying = not flying
+
+	if flying then
+		flyBtn.Text = "FLY ON"
+		BV.Parent = hrp
+		BG.Parent = hrp
+	else
+		flyBtn.Text = "FLY OFF"
+		BV.Parent = nil
+		BG.Parent = nil
+	end
+
+end)
+
+-- Speed
+plus.MouseButton1Click:Connect(function()
+	speed += 10
+end)
+
+minus.MouseButton1Click:Connect(function()
+	speed = math.max(10,speed - 10)
+end)
+
+-- HOLD BUTTON
+upBtn.MouseButton1Down:Connect(function()
+	up = true
+end)
+
+upBtn.MouseButton1Up:Connect(function()
+	up = false
+end)
+
+downBtn.MouseButton1Down:Connect(function()
+	down = true
+end)
+
+downBtn.MouseButton1Up:Connect(function()
+	down = false
+end)
+
+-- Fly Smooth
+RunService.RenderStepped:Connect(function()
+
+	if flying then
+
+		local humanoid = char:FindFirstChildOfClass("Humanoid")
+		local cam = workspace.CurrentCamera
+
+		local velocity = Vector3.zero
+		local moveDir = humanoid.MoveDirection
+
+		if moveDir.Magnitude > 0 then
+			velocity =
+			(cam.CFrame.LookVector * moveDir.Z +
+			cam.CFrame.RightVector * moveDir.X) * speed
+		end
+
+		if up then
+			velocity += Vector3.new(0,speed,0)
+		end
+
+		if down then
+			velocity -= Vector3.new(0,speed,0)
+		end
+
+		BV.Velocity = velocity
+		BG.CFrame = cam.CFrame
+
+	end
+
+end)
